@@ -1,0 +1,85 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "ignore": [
+      ".next",
+      "node_modules",
+      "dist",
+      "build",
+      "*.min.js",
+      "*.css"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "attributePosition": "auto",
+    "trailingCommas": "es5"
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "complexity": {
+        "noForEach": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off"
+      },
+      "style": {
+        "useImportType": "off",
+        "noNonNullAssertion": "off"
+      },
+      "nursery": {
+        "useSortedClasses": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "trailingCommas": "es5",
+      "semicolons": "always",
+      "arrowParentheses": "always"
+    }
+  },
+  "overrides": [
+    {
+      "include": [
+        "*.ts",
+        "*.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": [
+        "next.config.*",
+        "tailwind.config.*",
+        "postcss.config.*",
+        "biome.json"
+      ],
+      "formatter": {
+        "quoteStyle": "double"
+      }
+    }
+  ]
+}
