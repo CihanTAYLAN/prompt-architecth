@@ -1,7 +1,7 @@
 'use client'
 
-import React from 'react'
-import { Copy, Check, Save } from 'lucide-react'
+import React, { useEffect, useCallback, useRef } from 'react'
+import { Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,19 +13,21 @@ interface MainContentProps {
   originalInput: string
   enhancedOutput: string
   onEnhancedOutputChange: (value: string) => void
-  onSave: () => void
-  isSaving: boolean
+  onAutoSave: (value: string) => void
+  promptId?: string
 }
 
 export function MainContent({
   originalInput,
   enhancedOutput,
   onEnhancedOutputChange,
-  onSave,
-  isSaving,
+  onAutoSave,
+  promptId,
 }: MainContentProps) {
   const { toast } = useToast()
   const [copied, setCopied] = React.useState(false)
+  const [lastSaved, setLastSaved] = React.useState<string>(enhancedOutput)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleCopy = async () => {
     if (!enhancedOutput) return
@@ -47,6 +49,58 @@ export function MainContent({
     }
   }
 
+  const saveToBackend = useCallback(
+    async (value: string) => {
+      if (!promptId) return
+
+      try {
+        const response = await fetch('/api/prompts/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            promptId,
+            enhancedOutput: value,
+          }),
+        })
+
+        if (response.ok) {
+          toast({
+            title: 'Saved',
+            description: 'Prompt saved automatically',
+          })
+          setLastSaved(value)
+        }
+      } catch {
+        toast({
+          title: 'Error',
+          description: 'Failed to save prompt',
+          variant: 'destructive',
+        })
+      }
+    },
+    [promptId, toast]
+  )
+
+  const handleChange = (value: string) => {
+    onEnhancedOutputChange(value)
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+
+    debounceRef.current = setTimeout(() => {
+      saveToBackend(value)
+    }, 1500)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [])
+
   return (
     <div className="flex flex-col h-full bg-background">
       <Tabs defaultValue="editor" className="flex flex-col h-full">
@@ -56,29 +110,19 @@ export function MainContent({
             <TabsTrigger value="diff">Diff View</TabsTrigger>
           </TabsList>
 
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopy}
-              disabled={!enhancedOutput}
-            >
-              {copied ? (
-                <Check className="w-4 h-4 mr-2" />
-              ) : (
-                <Copy className="w-4 h-4 mr-2" />
-              )}
-              {copied ? 'Copied' : 'Copy'}
-            </Button>
-            <Button
-              size="sm"
-              onClick={onSave}
-              disabled={!enhancedOutput || isSaving}
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopy}
+            disabled={!enhancedOutput}
+          >
+            {copied ? (
+              <Check className="w-4 h-4 mr-2" />
+            ) : (
+              <Copy className="w-4 h-4 mr-2" />
+            )}
+            {copied ? 'Copied' : 'Copy'}
+          </Button>
         </div>
 
         <TabsContent value="editor" className="flex-1 m-0 p-4">
@@ -90,7 +134,7 @@ export function MainContent({
               {enhancedOutput ? (
                 <Textarea
                   value={enhancedOutput}
-                  onChange={(e) => onEnhancedOutputChange(e.target.value)}
+                  onChange={(e) => handleChange(e.target.value)}
                   className="h-full resize-none"
                   placeholder="Your enhanced prompt will appear here..."
                 />

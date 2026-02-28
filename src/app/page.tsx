@@ -50,6 +50,34 @@ export default function Home() {
     setPrompt(prompt)
   }
 
+  const handleAutoSave = async (value: string) => {
+    if (!selectedPrompt) return
+
+    try {
+      const response = await fetch('/api/prompts/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          promptId: selectedPrompt.id,
+          enhancedOutput: value,
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: 'Saved',
+          description: 'Prompt saved successfully!',
+        })
+      }
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Failed to save prompt',
+        variant: 'destructive',
+      })
+    }
+  }
+
   const handleEnhance = async (refinement?: string) => {
     const isRecursive = !!selectedPrompt?.enhancedOutput
 
@@ -80,34 +108,6 @@ export default function Home() {
       toast({
         title: 'Success',
         description: 'Prompt enhanced successfully!',
-      })
-    }
-  }
-
-  const handleSave = async () => {
-    if (!selectedPrompt) return
-
-    try {
-      const response = await fetch('/api/prompts/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          promptId: selectedPrompt.id,
-          enhancedOutput: selectedPrompt.enhancedOutput,
-        }),
-      })
-
-      if (response.ok) {
-        toast({
-          title: 'Saved',
-          description: 'Prompt saved successfully!',
-        })
-      }
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to save prompt',
-        variant: 'destructive',
       })
     }
   }
@@ -150,8 +150,8 @@ export default function Home() {
               setSelectedPrompt({ ...selectedPrompt, enhancedOutput: value })
             }
           }}
-          onSave={handleSave}
-          isSaving={false}
+          onAutoSave={handleAutoSave}
+          promptId={selectedPrompt?.id}
         />
       </div>
     </div>

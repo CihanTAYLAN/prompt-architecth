@@ -20,6 +20,7 @@ export interface PromptEnhancementResponse {
   detectedDomain: string
   expertRole: string
   refinements: string[]
+  promptId?: string
 }
 
 export type PromptDomain =
